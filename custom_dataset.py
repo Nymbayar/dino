@@ -19,7 +19,7 @@ def remove_element(x,unlabel_list):
 
 class GerDataset(Dataset):
 
-    def __init__(self,root):
+    def __init__(self,root,transform):
 
         unlabelled_images = [ '07081.png',
                           '02528.png',
@@ -36,6 +36,8 @@ class GerDataset(Dataset):
                           '04285.txt',
                           '03798.txt',
                           '02448.txt']
+
+        self.transform = transform
         self.root = root
         tmp_imgs = list(sorted(os.listdir(os.path.join(root,'images'))))
         tmp_targets = list(sorted(os.listdir(os.path.join(root,'class'))))
@@ -50,11 +52,11 @@ class GerDataset(Dataset):
         imagepil = PIL.Image.open(os.path.join(self.root,'images',selected_filename)).convert('RGB')
         target = pd.read_csv(os.path.join(self.root,'class',self.targets[idx]),header=None)
         boxes = []
-        print('idx:',idx)
-        print('txt:',self.targets[idx])
+        #print('idx:',idx)
+        #print('txt:',self.targets[idx])
         for i in range(len(target)):
             values = target[0].values[i].split()
-            boxes.append([float(values[1]),float(values[2]),float(values[3],float(values[4]))])
+            boxes.append([float(values[1]),float(values[2]),float(values[3]),float(values[4])])
         boxes = torch.as_tensor(boxes,dtype=torch.float32)
         # Only Ger as a label
         labels = torch.ones((len(target)),dtype=torch.int64)
@@ -77,7 +79,8 @@ class GerDataset(Dataset):
         target['area'] = area
         target['iscrowd'] = iscrowd
 
-        return imagepil, target
+        image = self.transform(imagepil)
+        return image, target
     
     def __len__(self):
         return len(self.imgs)
