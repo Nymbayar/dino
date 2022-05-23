@@ -13,7 +13,7 @@ def remove_element(x,unlabel_list):
         if i in unlabel_list:
             continue
         else:
-            new_list.append(x)
+            new_list.append(i)
     return new_list
 
 
@@ -46,9 +46,12 @@ class GerDataset(Dataset):
         # Load images and targets
         selected_filename = self.imgs[idx]
         #print(selected_filename)
+        #print(type(idx))
         imagepil = PIL.Image.open(os.path.join(self.root,'images',selected_filename)).convert('RGB')
-        target = pd.read_csv(os.path.join(self.root,'class',self.targets[idx]))
+        target = pd.read_csv(os.path.join(self.root,'class',self.targets[idx]),header=None)
         boxes = []
+        print('idx:',idx)
+        print('txt:',self.targets[idx])
         for i in range(len(target)):
             values = target[0].values[i].split()
             boxes.append([float(values[1]),float(values[2]),float(values[3],float(values[4]))])
@@ -58,7 +61,12 @@ class GerDataset(Dataset):
         # image_id
         image_id = torch.tensor([idx])
         # Bounding Box Area
-        area = (boxes[:,3] - boxes[:,1]) * (boxes[:,2] - boxes[:,0])
+        try:
+            area = (boxes[:,3] - boxes[:,1]) * (boxes[:,2] - boxes[:,0])
+        except IndexError:
+            #print('boxes:',boxes)
+            
+            area = (boxes[3] - boxes[1]) * (boxes[2] - boxes[0])
         # Suppose al instances are not crowd
         iscrowd = torch.zeros(len(target),dtype=torch.int64)
         
