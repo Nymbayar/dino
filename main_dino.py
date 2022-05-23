@@ -34,7 +34,7 @@ import utils
 import vision_transformer as vits
 from vision_transformer import DINOHead
 
-from custom_dataset import GerDataset
+from custom_dataset import GerDataset, collate_fn
 
 torchvision_archs = sorted(name for name in torchvision_models.__dict__
     if name.islower() and not name.startswith("__")
@@ -149,6 +149,7 @@ def train_dino(args):
     data_loader = torch.utils.data.DataLoader(
         dataset,
         sampler=sampler,
+        collate_fn=dataset.collate_fn,
         batch_size=args.batch_size_per_gpu,
         num_workers=args.num_workers,
         pin_memory=True,
@@ -421,6 +422,7 @@ class DINOLoss(nn.Module):
 class DataAugmentationDINO(object):
     def __init__(self, global_crops_scale, local_crops_scale, local_crops_number):
         flip_and_color_jitter = transforms.Compose([
+            #transforms.Resize(300),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomApply(
                 [transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1)],
@@ -435,6 +437,7 @@ class DataAugmentationDINO(object):
 
         # first global crop
         self.global_transfo1 = transforms.Compose([
+            #transforms.Resize((300,300)),
             transforms.RandomResizedCrop(224, scale=global_crops_scale, interpolation=Image.BICUBIC),
             flip_and_color_jitter,
             utils.GaussianBlur(1.0),
@@ -463,7 +466,7 @@ class DataAugmentationDINO(object):
         crops.append(self.global_transfo2(image))
         for _ in range(self.local_crops_number):
             crops.append(self.local_transfo(image))
-        return crops
+        return crops[0]
 
 
 if __name__ == '__main__':

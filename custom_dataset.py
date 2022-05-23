@@ -73,14 +73,33 @@ class GerDataset(Dataset):
         iscrowd = torch.zeros(len(target),dtype=torch.int64)
         
         target = {}
-        target['boxes'] = boxes
-        target['labels'] = labels
-        target['image_id'] = image_id
-        target['area'] = area
-        target['iscrowd'] = iscrowd
+        target['boxes'] = boxes#.cuda()
+        target['labels'] = labels#.cuda()
+        target['image_id'] = image_id#.cuda()
+        target['area'] = area#.cuda()
+        target['iscrowd'] = iscrowd#.cuda()
 
         image = self.transform(imagepil)
+        #image = image.cuda()
         return image, target
     
     def __len__(self):
         return len(self.imgs)
+
+
+    def collate_fn(self,batch): 
+        images = []
+        target = []
+        
+        for b in batch:
+            images.append(b[0])
+            target.append(b[1])
+            
+
+        images = torch.stack(images, dim=0)
+
+        return images,target  # tensor (N, 3, 300, 300), 3 lists of N tensors each
+        
+        
+def collate_fn(batch):
+    return tuple(zip(*batch))
